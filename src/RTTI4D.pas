@@ -6,18 +6,14 @@ uses
   RTTI4D.Enum,
   RTTI4D.Exceptions,
   RTTI4D.Intf,
-  RTTI4D.Obj,
-  RTTI4D.Field,
-  RTTI4D.Prop,
-  RTTI4D.Method;
+  RTTI4D.Obj;
 
 type
   { Enumerations }
   TRTTI4DType = RTTI4D.Enum.TRTTI4DType;
   TRTTI4DOperation = RTTI4D.Enum.TRTTI4DOperation;
   TRTTI4DVisibility = RTTI4D.Enum.TRTTI4DVisibility;
-  TRTTI4DTypeHelper = RTTI4D.Enum.TRTTI4DTypeHelper;
-  TRTTI4DVisibilityHelper = RTTI4D.Enum.TRTTI4DVisibilityHelper;
+  TRTTI4DMethodType = RTTI4D.Enum.TRTTI4DMethodType;
 
   { Exceptions }
   ERTTIException = RTTI4D.Exceptions.ERTTIException;
@@ -31,6 +27,8 @@ type
   ERTTIPropertyIsNotReadable = RTTI4D.Exceptions.ERTTIPropertyIsNotReadable;
   ERTTIPropertyIsNotWritable = RTTI4D.Exceptions.ERTTIPropertyIsNotWritable;
   ERTTIObjectIsNotInstance = RTTI4D.Exceptions.ERTTIObjectIsNotInstance;
+  ERTTIMethodNotExists = RTTI4D.Exceptions.ERTTIMethodNotExists;
+  ERTTIClassHasNoInheritance = RTTI4D.Exceptions.ERTTIClassHasNoInheritance;
 
   { Interfaces }
   IRTTI4DObject = RTTI4D.Intf.IRTTI4DObject;
@@ -40,9 +38,6 @@ type
 
   { Classes }
   TRTTI4DObject = RTTI4D.Obj.TRTTI4DObject;
-  //TRTTI4DField = RTTI4D.Field.TRTTI4DField;
-  //TRTTI4DProperty = RTTI4D.Prop.TRTTI4DProperty;
-  //TRTTI4DMethod = RTTI4D.Method.TRTTI4DMethod;
 
 implementation
 

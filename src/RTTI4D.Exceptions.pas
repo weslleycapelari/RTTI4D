@@ -57,6 +57,10 @@ type
     constructor Create(const AClassName, AMethodName: string);
   end;
 
+  ERTTIClassHasNoInheritance = class(ERTTIException)
+    constructor Create(const AClassName: string);
+  end;
+
 
 implementation
 
@@ -159,6 +163,14 @@ constructor ERTTIMethodNotExists.Create(const AClassName, AMethodName: string);
 begin
   inherited CreateFmt('The method %s.%s in class does not exists.',
     [AClassName, AMethodName]);
+end;
+
+{ ERTTIClassHasNoInheritance }
+
+constructor ERTTIClassHasNoInheritance.Create(const AClassName: string);
+begin
+  inherited CreateFmt('The class %s is not inherited from another class.',
+    [AClassName]);
 end;
 
 end.

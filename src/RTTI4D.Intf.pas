@@ -44,6 +44,11 @@ type
     /// <returns>The parent RTTI object.</returns>
     function Parent: IRTTI4DObject;
     /// <summary>
+    /// Returns the inherited class as RTTI object.
+    /// </summary>
+    /// <returns>The inherited class as RTTI object.</returns>
+    function InheritedClass: IRTTI4DObject;
+    /// <summary>
     /// Gets or sets the reference instance.
     /// </summary>
     /// <returns>The reference instance.</returns>
@@ -379,6 +384,9 @@ type
       const AClass: TCustomAttributeClass): TCustomAttribute;
   end;
 
+  /// <summary>
+  /// Interface for manipulating RTTI properties.
+  /// </summary>
   IRTTI4DProperty = interface
     ['{D83B1020-B313-41DC-8149-595E4FAC9F95}']
     /// <summary>
@@ -519,6 +527,9 @@ type
       const AClass: TCustomAttributeClass): TCustomAttribute;
   end;
 
+  /// <summary>
+  /// Interface for manipulating RTTI methods.
+  /// </summary>
   IRTTI4DMethod = interface
     ['{D83B1020-B313-41DC-8149-595E4FAC9F95}']
     /// <summary>

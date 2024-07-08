@@ -92,6 +92,7 @@ type
     function Silent: Boolean; overload;
     function Silent(const AValue: Boolean): IRTTI4DObject; overload;
     function Parent: IRTTI4DObject;
+    function InheritedClass: IRTTI4DObject;
 
     function ClassName: string;
     function IsRefInstance: Boolean;
@@ -219,6 +220,21 @@ function TRTTI4DObject.HasAttribute(
   const AClass: TCustomAttributeClass): Boolean;
 begin
   Result := FType.HasAttribute(AClass);
+end;
+
+function TRTTI4DObject.InheritedClass: IRTTI4DObject;
+begin
+  Result := nil;
+
+  if FType.AsInstance.MetaclassType.ClassParent <> nil then
+  begin
+    if not FSilent then
+      raise ERTTIClassHasNoInheritance.Create(
+        FType.AsInstance.MetaclassType.ClassName);
+    Exit;
+  end;
+
+  Result := TRTTI4DObject.New(FType.AsInstance.MetaclassType.ClassParent);
 end;
 
 function TRTTI4DObject.IsHFA: Boolean;
