@@ -29,6 +29,7 @@ type
   ERTTIObjectIsNotInstance = RTTI4D.Exceptions.ERTTIObjectIsNotInstance;
   ERTTIMethodNotExists = RTTI4D.Exceptions.ERTTIMethodNotExists;
   ERTTIClassHasNoInheritance = RTTI4D.Exceptions.ERTTIClassHasNoInheritance;
+  ERTTIClassHasNoGeneric = RTTI4D.Exceptions.ERTTIClassHasNoGeneric;
 
   { Interfaces }
   IRTTI4DObject = RTTI4D.Intf.IRTTI4DObject;

@@ -23,10 +23,25 @@ type
     /// </summary>
     procedure Release;
     /// <summary>
+    /// Refresh the current instance.
+    /// </summary>
+    function Refresh: IRTTI4DObject; overload;
+    /// <summary>
+    /// Refresh the current instance.
+    /// </summary>
+    /// <returns>The current instance.</returns>
+    function Refresh(AInstance: Pointer): IRTTI4DObject; overload;
+    /// <summary>
     /// Returns the RTTI type of the object.
     /// </summary>
     /// <returns>The RTTI type of the object.</returns>
-    function RttiType: TRttiType;
+    function RttiType: TRttiType; overload;
+    /// <summary>
+    /// Set the RTTI type of the object.
+    /// </summary>
+    /// <param name="AValue">The new RTTI type.</param>
+    /// <returns>The current object instance.</returns>
+    function RttiType(const AValue: TRttiType): IRTTI4DObject; overload;
     /// <summary>
     /// Gets or sets the silent mode.
     /// </summary>
@@ -48,6 +63,16 @@ type
     /// </summary>
     /// <returns>The inherited class as RTTI object.</returns>
     function InheritedClass: IRTTI4DObject;
+    /// <summary>
+    /// Returns the generic class as RTTI object.
+    /// </summary>
+    /// <returns>The generic class as RTTI object.</returns>
+    function GenericClass: IRTTI4DObject;
+    /// <summary>
+    /// Returns the object type.
+    /// </summary>
+    /// <returns>The object type.</returns>
+    function ObjectType: TRTTI4DType;
     /// <summary>
     /// Gets or sets the reference instance.
     /// </summary>
@@ -578,6 +603,18 @@ type
     /// </summary>
     /// <returns>The current object instance.</returns>
     function Call: IRTTI4DMethod; overload;
+    /// <summary>
+    /// Execute method of instance with params.
+    /// </summary>
+    /// <param name="AParams">The array of params.</param>
+    /// <returns>The current object instance.</returns>
+    function Call(AParams: array of const): IRTTI4DMethod; overload;
+    /// <summary>
+    /// Execute method of instance with params.
+    /// </summary>
+    /// <param name="AParams">The array of params.</param>
+    /// <returns>The current object instance.</returns>
+    function Call(AParams: TArray<TValue>): IRTTI4DMethod; overload;
     /// <summary>
     /// Execute method of instance with params.
     /// </summary>

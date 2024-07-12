@@ -28,9 +28,9 @@ type
     FVisibility: TRTTI4DVisibility;
 
     procedure Update;
-    function VerifyMethod(AParams: TArray<Variant>): Boolean;
-    function MethodExists(AParams: TArray<Variant>): Boolean;
-    function GetMethodByParams(AParams: TArray<Variant>): TRttiMethod;
+    function VerifyMethod(AParams: TArray<TValue>): Boolean;
+    function MethodExists(AParams: TArray<TValue>): Boolean;
+    function GetMethodByParams(AParams: TArray<TValue>): TRttiMethod;
 
     constructor Create(const ARttiMethod: TRttiMethod;
       AObject: IRTTI4DObject); overload;
@@ -52,6 +52,8 @@ type
     function Result: TValue;
     function Executed: Boolean;
     function Call: IRTTI4DMethod; overload;
+    function Call(AParams: array of const): IRTTI4DMethod; overload;
+    function Call(AParams: TArray<TValue>): IRTTI4DMethod; overload;
     function Call(AParams: TArray<Variant>): IRTTI4DMethod; overload;
 
     function Attributes: TArray<TCustomAttribute>;
@@ -89,16 +91,35 @@ var
 begin
   Result := Self;
 
+  SetLength(LParams, Length(AParams));
+  for LCount := Low(AParams) to High(AParams) do
+    LParams[LCount] := TValue.FromVariant(AParams[LCount]);
+  Call(LParams);
+end;
+
+function TRTTI4DMethod.Call: IRTTI4DMethod;
+var
+  LArray: TArray<Variant>;
+begin
+  Result := Call(LArray);
+end;
+
+function TRTTI4DMethod.Call(AParams: TArray<TValue>): IRTTI4DMethod;
+var
+  LObject: TObject;
+begin
+  Result := Self;
+
   if VerifyMethod(AParams) then
   begin
-    SetLength(LParams, Length(AParams));
-    for LCount := Low(AParams) to High(AParams) do
-      LParams[LCount] := TValue.FromVariant(AParams[LCount]);
-
     FResult := TValue.Empty;
     FExecuted := False;
     try
-      FResult := FMethod.Invoke(TObject(FParent.RefInstance^), LParams);
+      LObject := TObject(FParent.RefInstance^);
+      if LObject = nil then
+        FResult := FMethod.Invoke(FParent.RefClass, AParams)
+      else
+        FResult := FMethod.Invoke(LObject, AParams);
       FExecuted := True;
     except
       if not FSilent then
@@ -107,9 +128,17 @@ begin
   end;
 end;
 
-function TRTTI4DMethod.Call: IRTTI4DMethod;
+function TRTTI4DMethod.Call(AParams: array of const): IRTTI4DMethod;
+var
+  LParams: TArray<TValue>;
+  LCount : Integer;
 begin
-  Result := Call([]);
+  Result := Self;
+
+  SetLength(LParams, Length(AParams));
+  for LCount := Low(AParams) to High(AParams) do
+    LParams[LCount] := TValue.FromVarRec(AParams[LCount]);
+  Call(LParams);
 end;
 
 constructor TRTTI4DMethod.Create(const AMethodName: string;
@@ -136,11 +165,34 @@ begin
   Result := FRttiMethod.GetAttribute(AClass);
 end;
 
-function TRTTI4DMethod.GetMethodByParams(AParams: TArray<Variant>): TRttiMethod;
+function TRTTI4DMethod.GetMethodByParams(AParams: TArray<TValue>): TRttiMethod;
 var
   LMethod: TRttiMethod;
-  LParam : TRttiParameter;
-  LCount : Integer;
+
+  function VerifyMethodParams(const ARttiMethod: TRttiMethod): Boolean;
+  var
+    LParam: TRttiParameter;
+    LCount: Integer;
+  begin
+    Result := False;
+
+    LCount := 0;
+    for LParam in LMethod.GetParameters do
+    begin
+      if Length(AParams) = LCount then
+        Break;
+
+      if LParam.ParamType.TypeKind <> AParams[LCount].Kind then
+        Break;
+
+      Inc(LCount);
+    end;
+
+    if Length(AParams) > LCount then
+      Exit;
+
+    Result := True;
+  end;
 begin
   Result  := nil;
   FMethod := nil;
@@ -150,20 +202,7 @@ begin
     if Length(LMethod.GetParameters) < Length(AParams) then
       Continue;
 
-    LCount := -1;
-    for LParam in LMethod.GetParameters do
-    begin
-      Inc(LCount);
-
-      if Length(AParams) = LCount then
-        Break;
-
-      if LParam.ParamType.TypeKind <> 
-        TValue.FromVariant(AParams[LCount]).Kind then
-        Break;
-    end;
-
-    if Length(AParams) > (LCount + 1) then
+    if not VerifyMethodParams(LMethod) then
       Continue;
 
     FMethod := LMethod;
@@ -177,7 +216,7 @@ begin
   Result := FRttiMethod.HasAttribute(AClass);
 end;
 
-function TRTTI4DMethod.MethodExists(AParams: TArray<Variant>): Boolean;
+function TRTTI4DMethod.MethodExists(AParams: TArray<TValue>): Boolean;
 begin
   Result := False;
 
@@ -238,7 +277,7 @@ begin
   FVisibility := TRTTI4DVisibility.GetVisibility(FRttiMethod.Visibility);
 end;
 
-function TRTTI4DMethod.VerifyMethod(AParams: TArray<Variant>): Boolean;
+function TRTTI4DMethod.VerifyMethod(AParams: TArray<TValue>): Boolean;
 begin
   Result := False;
 

@@ -61,6 +61,9 @@ type
     constructor Create(const AClassName: string);
   end;
 
+  ERTTIClassHasNoGeneric = class(ERTTIException)
+    constructor Create(const AClassName: string);
+  end;
 
 implementation
 
@@ -170,6 +173,14 @@ end;
 constructor ERTTIClassHasNoInheritance.Create(const AClassName: string);
 begin
   inherited CreateFmt('The class %s is not inherited from another class.',
+    [AClassName]);
+end;
+
+{ ERTTIClassHasNoGeneric }
+
+constructor ERTTIClassHasNoGeneric.Create(const AClassName: string);
+begin
+  inherited CreateFmt('The class %s is not contains a generic class.',
     [AClassName]);
 end;
 

@@ -3,6 +3,7 @@ unit RTTI4D.Obj;
 interface
 
 uses
+  RTTI4D.Enum,
   RTTI4D.Intf,
   RTTI4D.Utils,
   RTTI4D.Exceptions,
@@ -23,6 +24,7 @@ type
 
     FContext: TRttiContext;
     FType: TRttiType;
+    FObjectType: TRtti4DType;
 
     FClassName : string;
     FIsPublic  : Boolean;
@@ -53,7 +55,8 @@ type
     ///  através dos valores definidos
     /// </summary>
     procedure Update(const AIsClass: Boolean;
-      const AIsTypedPointer: Boolean = True);
+      const AIsTypedPointer: Boolean = True;
+      const AIsRttiType: Boolean = False);
 
     /// <summary>
     ///  Construtor interno, apenas para gerar os valores padrões e necessários
@@ -81,7 +84,10 @@ type
       AObject: IRTTI4DObject): IRTTI4DObject; overload;
 
     procedure Release;
-    function RttiType: TRttiType;
+    function Refresh: IRTTI4DObject; overload;
+    function Refresh(AInstance: Pointer): IRTTI4DObject; overload;
+    function RttiType: TRttiType; overload;
+    function RttiType(const AValue: TRttiType): IRTTI4DObject; overload;
 
     function RefInstance: Pointer; overload;
     function RefInstance(AInstance: Pointer): IRTTI4DObject; overload;
@@ -93,6 +99,8 @@ type
     function Silent(const AValue: Boolean): IRTTI4DObject; overload;
     function Parent: IRTTI4DObject;
     function InheritedClass: IRTTI4DObject;
+    function GenericClass: IRTTI4DObject;
+    function ObjectType: TRTTI4DType;
 
     function ClassName: string;
     function IsRefInstance: Boolean;
@@ -210,6 +218,26 @@ begin
     [FPublishedFields, FPrivateFields, FProtectedFields, FPublicFields]);
 end;
 
+function TRTTI4DObject.GenericClass: IRTTI4DObject;
+var
+  LGeneric: string;
+begin
+  Result := nil;
+
+  if not FClassName.Contains('<') then
+  begin
+    if not FSilent then
+      raise ERTTIClassHasNoGeneric.Create(
+        FType.AsInstance.MetaclassType.ClassName);
+    Exit;
+  end;
+
+  LGeneric := Copy(FClassName, Pos('<', FClassName) + 1);
+  SetLength(LGeneric, Length(LGeneric) - 1);
+
+  Result := TRTTI4DObject.New(nil, Self).RttiType(FContext.FindType(LGeneric));
+end;
+
 function TRTTI4DObject.GetAttribute(
   const AClass: TCustomAttributeClass): TCustomAttribute;
 begin
@@ -226,7 +254,7 @@ function TRTTI4DObject.InheritedClass: IRTTI4DObject;
 begin
   Result := nil;
 
-  if FType.AsInstance.MetaclassType.ClassParent <> nil then
+  if FType.AsInstance.MetaclassType.ClassParent = nil then
   begin
     if not FSilent then
       raise ERTTIClassHasNoInheritance.Create(
@@ -417,87 +445,14 @@ begin
   end;
 end;
 
-function TRTTI4DObject.RefTypeInstance(AInstance: Pointer;
-  const AClass: TClass): IRTTI4DObject;
-begin
-  Result := Self;
-  if (AInstance <> FRefInstance) or (AClass <> FRefClass) then
-  begin
-    FRefInstance := AInstance;
-    FRefClass := AClass;
-    Update(False, False);
-  end;
-end;
-
-procedure TRTTI4DObject.Release;
-begin
-  Destroy;
-end;
-
-function TRTTI4DObject.RttiType: TRttiType;
-begin
-  Result := FType;
-end;
-
-function TRTTI4DObject.RefInstance: Pointer;
-begin
-  Result := FRefInstance;
-end;
-
-function TRTTI4DObject.Silent(const AValue: Boolean): IRTTI4DObject;
-var
-  LField   : IRTTI4DField;
-  LProperty: IRTTI4DProperty;
-begin
-  Result  := Self;
-  FSilent := AValue;
-
-  for LField in Fields do
-    LField.Silent(AValue);
-
-  for LProperty in Properties do
-    LProperty.Silent(AValue);
-end;
-
-function TRTTI4DObject.Silent: Boolean;
-begin
-  Result := FSilent;
-end;
-
-procedure TRTTI4DObject.Update(const AIsClass, AIsTypedPointer: Boolean);
+function TRTTI4DObject.Refresh: IRTTI4DObject;
 var
   LField   : TRttiField;
   LProperty: TRttiProperty;
   LMethod  : TRttiMethod;
 begin
-  if AIsTypedPointer then
-  begin
-    if AIsClass then
-    begin
-      FType := FContext.GetType(FRefClass);
-
-      if FRefInstance <> nil then
-        if FType <> FContext.GetType(TObject(FRefInstance^).ClassType) then
-          FRefInstance := nil;
-    end
-    else
-    begin
-      try
-        FRefClass := nil;
-        FType := FContext.GetType(TObject(FRefInstance^).ClassType);
-      except
-        FRefInstance := nil;
-        if not FSilent then
-          raise ERTTIPointerIsSimple.Create;
-        Exit;
-      end;
-    end;
-  end
-  else
-    FType := FContext.GetType(FRefClass);
-
-  FRefClass   := FType.AsInstance.MetaclassType;
-  FClassName  := FRefClass.ClassName;
+  FObjectType := TRTTI4DType.GetType(FType.TypeKind);
+  FClassName  := FType.Name;
   FIsPublic   := FType.IsPublicType;
   FIsManaged  := FType.IsManaged;
   FIsInstance := FType.IsInstance;
@@ -553,6 +508,109 @@ begin
   end;
 end;
 
+function TRTTI4DObject.Refresh(AInstance: Pointer): IRTTI4DObject;
+begin
+  Result := Self;
+  FRefInstance := AInstance;
+  Update(False);
+end;
+
+function TRTTI4DObject.RefTypeInstance(AInstance: Pointer;
+  const AClass: TClass): IRTTI4DObject;
+begin
+  Result := Self;
+  if (AInstance <> FRefInstance) or (AClass <> FRefClass) then
+  begin
+    FRefInstance := AInstance;
+    FRefClass := AClass;
+    Update(False, False);
+  end;
+end;
+
+procedure TRTTI4DObject.Release;
+begin
+  Destroy;
+end;
+
+function TRTTI4DObject.RttiType(const AValue: TRttiType): IRTTI4DObject;
+begin
+  Result := Self;
+  FType := AValue;
+  Refresh;
+end;
+
+function TRTTI4DObject.RttiType: TRttiType;
+begin
+  Result := FType;
+end;
+
+function TRTTI4DObject.RefInstance: Pointer;
+begin
+  Result := FRefInstance;
+end;
+
+function TRTTI4DObject.Silent(const AValue: Boolean): IRTTI4DObject;
+var
+  LField   : IRTTI4DField;
+  LProperty: IRTTI4DProperty;
+begin
+  Result  := Self;
+  FSilent := AValue;
+
+  for LField in Fields do
+    LField.Silent(AValue);
+
+  for LProperty in Properties do
+    LProperty.Silent(AValue);
+end;
+
+function TRTTI4DObject.Silent: Boolean;
+begin
+  Result := FSilent;
+end;
+
+procedure TRTTI4DObject.Update(const AIsClass, AIsTypedPointer,
+  AIsRttiType: Boolean);
+begin
+  if not AIsRttiType then
+  begin
+    if AIsTypedPointer then
+    begin
+      if AIsClass then
+      begin
+        FType := FContext.GetType(FRefClass);
+
+        if FRefInstance <> nil then
+          if FType <> FContext.GetType(TObject(FRefInstance^).ClassType) then
+            FRefInstance := nil;
+      end
+      else
+      begin
+        try
+          FRefClass := nil;
+          FType := FContext.GetType(TObject(FRefInstance^).ClassType);
+        except
+          FRefInstance := nil;
+          if not FSilent then
+            raise ERTTIPointerIsSimple.Create;
+          Exit;
+        end;
+      end;
+    end
+    else
+      FType := FContext.GetType(FRefClass);
+  end;
+
+  try
+    FRefClass := FType.AsInstance.MetaclassType;
+  except
+    FRefClass := nil;
+    // Suppress exception
+  end;
+
+  Refresh;
+end;
+
 function TRTTI4DObject.RefClass: TClass;
 begin
   Result := FRefClass;
@@ -583,6 +641,11 @@ class function TRTTI4DObject.New<T>(AInstance: T;
 begin
   Result := TRTTI4DObject.Create(AObject);
   Result.RefInstance(@AInstance);
+end;
+
+function TRTTI4DObject.ObjectType: TRTTI4DType;
+begin
+  Result := FObjectType;
 end;
 
 class function TRTTI4DObject.New(AInstance: Pointer; const AClass: TClass;
