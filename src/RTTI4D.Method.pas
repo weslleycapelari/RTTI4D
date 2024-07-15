@@ -22,6 +22,7 @@ type
     FExecuted: Boolean;
     FRttiMethod: TRttiMethod;
     FMethod: TRttiMethod;
+    FNeedInstance: Boolean;
 
     FName: string;
     FType: TRTTI4DMethodType;
@@ -115,7 +116,10 @@ begin
     FResult := TValue.Empty;
     FExecuted := False;
     try
-      LObject := TObject(FParent.RefInstance^);
+      LObject := nil;
+      if FNeedInstance then
+        LObject := TObject(FParent.RefInstance^);
+
       if LObject = nil then
         FResult := FMethod.Invoke(FParent.RefClass, AParams)
       else
@@ -219,9 +223,15 @@ end;
 function TRTTI4DMethod.MethodExists(AParams: TArray<TValue>): Boolean;
 begin
   Result := False;
+  FNeedInstance := True;
 
   if GetMethodByParams(AParams) <> nil then
+  begin
     Result := True;
+
+    if FMethod.IsConstructor or FMethod.IsClassMethod or FMethod.IsStatic then
+      FNeedInstance := False;
+  end;
 end;
 
 function TRTTI4DMethod.MethodType: TRTTI4DMethodType;
@@ -288,7 +298,7 @@ begin
     Exit;
   end;
 
-  if not FParent.IsRefInstance then
+  if (FNeedInstance) and (not FParent.IsRefInstance) then
   begin
     if not FSilent then
       raise ERTTIObjectIsNotInstance.Create(FParent.ClassName);

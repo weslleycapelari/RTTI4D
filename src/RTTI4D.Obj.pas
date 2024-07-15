@@ -451,6 +451,13 @@ var
   LProperty: TRttiProperty;
   LMethod  : TRttiMethod;
 begin
+  try
+    FRefClass := FType.AsInstance.MetaclassType;
+  except
+    FRefClass := nil;
+    // Suppress exception
+  end;
+
   FObjectType := TRTTI4DType.GetType(FType.TypeKind);
   FClassName  := FType.Name;
   FIsPublic   := FType.IsPublicType;
@@ -599,13 +606,6 @@ begin
     end
     else
       FType := FContext.GetType(FRefClass);
-  end;
-
-  try
-    FRefClass := FType.AsInstance.MetaclassType;
-  except
-    FRefClass := nil;
-    // Suppress exception
   end;
 
   Refresh;
