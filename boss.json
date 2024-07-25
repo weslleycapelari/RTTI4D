@@ -1,7 +1,7 @@
 {
 	"name": "RTTI4D",
 	"description": "A library to facilitate the use of RTTI",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"homepage": "https://github.com/weslleycapelari/RTTI4D",
 	"mainsrc": "./src",
 	"projects": [],
