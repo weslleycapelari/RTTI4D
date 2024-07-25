@@ -170,7 +170,11 @@ end;
 
 function TRTTI4DProperty.Attributes: TArray<TCustomAttribute>;
 begin
-  Result := FRttiProperty.GetAttributes;
+  try
+    Result := FRttiProperty.GetAttributes;
+  except
+    Result := [];
+  end;
 end;
 
 function TRTTI4DProperty.AsVariant: Variant;
@@ -228,7 +232,11 @@ end;
 function TRTTI4DProperty.GetAttribute(
   const AClass: TCustomAttributeClass): TCustomAttribute;
 begin
-  Result := FRttiProperty.GetAttribute(AClass);
+  try
+    Result := FRttiProperty.GetAttribute(AClass);
+  except
+    Result := nil;
+  end;
 end;
 
 function TRTTI4DProperty.GetValue: TValue;
@@ -245,7 +253,11 @@ end;
 function TRTTI4DProperty.HasAttribute(
   const AClass: TCustomAttributeClass): Boolean;
 begin
-  Result := FRttiProperty.HasAttribute(AClass);
+  try
+    Result := FRttiProperty.HasAttribute(AClass);
+  except
+    Result := False;
+  end;
 end;
 
 constructor TRTTI4DProperty.Create(const ARttiProperty: TRttiProperty;
